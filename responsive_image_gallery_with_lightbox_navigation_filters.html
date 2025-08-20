@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Image Gallery</title>
+  <style>
+    :root {
+      --bg: #0b0d10;
+      --card: #12161b;
+      --text: #e8eef6;
+      --muted: #9fb0c5;
+      --accent: #5ec2ff;
+      --accent-2: #8b5cf6;
+      --ring: 0 0 0 3px rgba(94, 194, 255, .25);
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      height: 100%
+    }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 600px at 75% -50%, rgba(94, 194, 255, .12), transparent 60%),
+        radial-gradient(1000px 500px at 10% -20%, rgba(139, 92, 246, .12), transparent 60%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: linear-gradient(180deg, rgba(11, 13, 16, .85), rgba(11, 13, 16, .65));
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255, 255, 255, .06);
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px 20px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(22px, 3.2vw, 36px);
+      letter-spacing: .2px
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 14px
+    }
+
+    .filters {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 12px
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid rgba(255, 255, 255, .12);
+      color: var(--text);
+      background: linear-gradient(180deg, rgba(255, 255, 255, .04), rgba(255, 255, 255, .02));
+      padding: 8px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 600;
+      letter-spacing: .2px;
+      transition: border-color .2s, transform .06s ease, background .2s, box-shadow .2s;
+    }
+
+    .btn:hover {
+      border-color: rgba(255, 255, 255, .3)
+    }
+
+    .btn:active {
+      transform: translateY(1px)
+    }
+
+    .btn[aria-pressed="true"] {
+      border-color: transparent;
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+      color: #061018;
+      box-shadow: 0 6px 24px rgba(94, 194, 255, .35)
+    }
+
+    .btn:focus-visible {
+      outline: none;
+      box-shadow: var(--ring)
+    }
+
+    .spacer {
+      flex: 1
+    }
+
+    .search {
+      position: relative
+    }
+
+    .search input {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, .1);
+      color: var(--text);
+      padding: 9px 12px 9px 36px;
+      border-radius: 10px;
+      min-width: 220px;
+    }
+
+    .search svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: .7
+    }
+
+    .gallery {
+      padding: 24px 20px 60px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px
+    }
+
+    figure {
+      position: relative;
+      margin: 0;
+      overflow: hidden;
+      border-radius: 16px;
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, .06)
+    }
+
+    figure::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: inherit;
+      box-shadow: inset 0 0 0 1px rgba(94, 194, 255, .08);
+    }
+
+    img {
+      display: block;
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      filter: saturate(1.05) contrast(1.03);
+      transition: transform .5s ease, filter .4s ease, opacity .3s ease
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: end;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, .55));
+      color: white;
+      padding: 12px;
+      opacity: 0;
+      transition: opacity .35s ease;
+    }
+
+    figure:hover img {
+      transform: scale(1.05);
+      filter: saturate(1.2) contrast(1.07)
+    }
+
+    figure:hover .overlay {
+      opacity: 1
+    }
+
+    .chip {
+      background: rgba(255, 255, 255, .12);
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+
+    .hidden {
+      pointer-events: none
+    }
+
+    .hide-anim {
+      opacity: 0;
+      transform: scale(.98)
+    }
+
+    .show-anim {
+      animation: pop .28s ease forwards
+    }
+
+    @keyframes pop {
+      from {
+        opacity: 0;
+        transform: scale(.98)
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1)
+      }
+    }
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 8, 12, .82);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    .lightbox[aria-hidden="false"] {
+      display: flex
+    }
+
+    .lightbox__inner {
+      position: relative;
+      max-width: min(92vw, 1100px);
+      max-height: 84vh;
+      aspect-ratio: 16/10;
+      background: #000;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 80px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 255, 255, .08) inset;
+    }
+
+    .lightbox__img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover
+    }
+
+    .lb-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, .12);
+      border: 1px solid rgba(255, 255, 255, .2);
+      color: var(--text);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: background .2s, transform .08s;
+    }
+
+    .lb-btn:hover {
+      background: rgba(255, 255, 255, .2)
+    }
+
+    .lb-btn:active {
+      transform: translateY(-50%) scale(.98)
+    }
+
+    .lb-prev {
+      left: 10px
+    }
+
+    .lb-next {
+      right: 10px
+    }
+
+    .lb-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .12);
+      border: 1px solid rgba(255, 255, 255, .18);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      cursor: pointer
+    }
+
+    .lb-caption {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 10px 14px;
+      color: #e4ecf7;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, .7));
+      font-size: 14px
+    }
+
+    @media (max-width:640px) {
+      img {
+        height: 180px
+      }
+
+      .lightbox__inner {
+        max-height: 72vh;
+        aspect-ratio: 3/4
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="wrap">
+      <h1>✨ Responsive Image Gallery</h1>
+      <div class="filters" role="toolbar" aria-label="Image filters and search">
+        <button class="btn" data-filter="all" aria-pressed="true">All</button>
+        <button class="btn" data-filter="nature">Nature</button>
+        <button class="btn" data-filter="city">City</button>
+        <button class="btn" data-filter="people">People</button>
+        <div class="spacer"></div>
+        <label class="search" aria-label="Search images">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true">
+            <path d="M21 21l-3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.6" />
+          </svg>
+          <input id="search" type="search" placeholder="Search by caption…" />
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <main class="gallery" id="gallery">
+    <div class="grid" id="grid" aria-live="polite">
+      <figure data-category="nature" data-caption="Forest trail at sunrise">
+        <img loading="lazy"
+          src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1200&auto=format&fit=crop"
+          alt="Sunlit forest trail" />
+        <figcaption class="overlay"><span class="chip">Nature</span></figcaption>
+      </figure>
+      <figure data-category="city" data-caption="Neon skyline at night">
+        <img loading="lazy"
+          src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1200&auto=format&fit=crop"
+          alt="City skyline at night" />
+        <figcaption class="overlay"><span class="chip">City</span></figcaption>
+      </figure>
+      <figure data-category="people" data-caption="Joyful portrait in sunlight">
+        <img loading="lazy"
+          src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1200&auto=format&fit=crop"
+          alt="Smiling person in sunlight" />
+        <figcaption class="overlay"><span class="chip">People</span></figcaption>
+      </figure>
+      <figure data-category="nature" data-caption="Mountain lake reflections">
+        <img loading="lazy"
+          src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1200&auto=format&fit=crop"
+          alt="Mountain lake" />
+        <figcaption class="overlay"><span class="chip">Nature</span></figcaption>
+      </figure>
+      <figure data-category="city" data-caption="Old town street golden hour">
+        <img loading="lazy"
+          src="https://images.unsplash.com/photo-1508057198894-247b23fe5ade?q=80&w=1200&auto=format&fit=crop"
+          alt="Old town street" />
+        <figcaption class="overlay"><span class="chip">City</span></figcaption>
+      </figure>
+      <figure data-category="people" data-caption="Skater mid-air trick">
+        <img loading="lazy"
+          src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?q=80&w=1200&auto=format&fit=crop"
+          alt="Skateboarder mid-air" />
+        <figcaption class="overlay"><span class="chip">People</span></figcaption>
+      </figure>
+      <figure data-category="nature" data-caption="Blooming wildflowers meadow">
+        <img loading="lazy"
+          src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop"
+          alt="Wildflowers" />
+        <figcaption class="overlay"><span class="chip">Nature</span></figcaption>
+      </figure>
+      <figure data-category="city" data-caption="Subway motion blur">
+        <img loading="lazy"
+          src="https://images.unsplash.com/photo-1477414348463-c0eb7f1359b6?q=80&w=1200&auto=format&fit=crop"
+          alt="Subway motion blur" />
+        <figcaption class="overlay"><span class="chip">City</span></figcaption>
+      </figure>
+      <figure data-category="people" data-caption="Street musician performing">
+        <img loading="lazy"
+          src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?q=80&w=1200&auto=format&fit=crop"
+          alt="Street musician" />
+        <figcaption class="overlay"><span class="chip">People</span></figcaption>
+      </figure>
+    </div>
+  </main>
+
+  <div class="lightbox" id="lightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Image viewer">
+    <div class="lightbox__inner">
+      <button class="lb-close" id="lbClose" aria-label="Close (Esc)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      </button>
+      <img class="lightbox__img" id="lbImg" alt="" />
+      <div class="lb-caption" id="lbCaption"></div>
+      <button class="lb-btn lb-prev" id="lbPrev" aria-label="Previous (←)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+      </button>
+      <button class="lb-btn lb-next" id="lbNext" aria-label="Next (→)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m9 18 6-6-6-6" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const grid = document.getElementById('grid');
+    const figures = Array.from(grid.querySelectorAll('figure'));
+    const buttons = Array.from(document.querySelectorAll('.btn[data-filter]'));
+    const searchInput = document.getElementById('search');
+
+    const lightbox = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lbImg');
+    const lbCaption = document.getElementById('lbCaption');
+    const lbPrev = document.getElementById('lbPrev');
+    const lbNext = document.getElementById('lbNext');
+    const lbClose = document.getElementById('lbClose');
+
+    let currentIndex = -1;
+
+    const visibleFigures = () => figures.filter(f => !f.classList.contains('hidden'));
+
+    function setActiveFilter(targetBtn) {
+      buttons.forEach(b => b.setAttribute('aria-pressed', b === targetBtn ? 'true' : 'false'));
+    }
+
+    function applyFilters() {
+      const active = buttons.find(b => b.getAttribute('aria-pressed') === 'true')?.dataset.filter || 'all';
+      const q = searchInput.value.trim().toLowerCase();
+
+      figures.forEach((fig) => {
+        const matchCategory = active === 'all' || fig.dataset.category === active;
+        const matchText = !q || fig.dataset.caption.toLowerCase().includes(q);
+        const shouldShow = matchCategory && matchText;
+        if (shouldShow) {
+          fig.classList.remove('hidden', 'hide-anim');
+          fig.classList.add('show-anim');
+        } else {
+          fig.classList.add('hidden', 'hide-anim');
+          fig.classList.remove('show-anim');
+        }
+      });
+
+      const vs = visibleFigures();
+      if (currentIndex >= vs.length) { currentIndex = vs.length - 1; }
+    }
+
+    buttons.forEach(btn => btn.addEventListener('click', () => { setActiveFilter(btn); applyFilters(); }));
+
+    searchInput.addEventListener('input', applyFilters);
+
+    grid.addEventListener('click', (e) => {
+      const fig = e.target.closest('figure');
+      if (!fig) return;
+      const vs = visibleFigures();
+      currentIndex = vs.indexOf(fig);
+      openLightbox(vs[currentIndex]);
+    });
+
+    function openLightbox(figure) {
+      const img = figure.querySelector('img');
+      lbImg.src = img.src;
+      lbImg.alt = img.alt;
+      lbCaption.textContent = figure.dataset.caption || img.alt || '';
+      lightbox.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      lbClose.focus();
+    }
+
+    function closeLightbox() {
+      lightbox.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    function showAt(index) {
+      const vs = visibleFigures();
+      if (vs.length === 0) return;
+      currentIndex = (index + vs.length) % vs.length; // wrap
+      const fig = vs[currentIndex];
+      const img = fig.querySelector('img');
+      lbImg.src = img.src; lbImg.alt = img.alt; lbCaption.textContent = fig.dataset.caption || '';
+    }
+
+    lbPrev.addEventListener('click', () => showAt(currentIndex - 1));
+    lbNext.addEventListener('click', () => showAt(currentIndex + 1));
+    lbClose.addEventListener('click', closeLightbox);
+
+    lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+
+    window.addEventListener('keydown', (e) => {
+      if (lightbox.getAttribute('aria-hidden') === 'true') return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') showAt(currentIndex - 1);
+      if (e.key === 'ArrowRight') showAt(currentIndex + 1);
+    });
+
+    let startX = 0;
+    lbImg.addEventListener('touchstart', e => startX = e.touches[0].clientX, { passive: true });
+    lbImg.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 40) { dx > 0 ? showAt(currentIndex - 1) : showAt(currentIndex + 1); }
+    });
+
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) { entry.target.classList.add('show-anim'); io.unobserve(entry.target); }
+      })
+    }, { threshold: .15 });
+    figures.forEach(f => io.observe(f));
+
+    applyFilters();
+  </script>
+</body>
+
+</html>
